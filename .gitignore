@@ -1,0 +1,77 @@
+# Laravel
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/.phpunit.cache
+
+# Environment
+.env
+.env.backup
+.env.production
+.env.*.php
+.env.php
+
+# IDE
+/.idea
+/.vscode
+/.fleet
+/.nova
+/.zed
+/.phpactor.json
+*.swp
+*.swo
+*~
+.project
+.settings
+.buildpath
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.bak
+
+# Laravel specific
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+auth.json
+
+# Logs
+*.log
+
+# Testing
+/coverage
+/.phpunit.cache
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# Build artifacts
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Database
+*.sqlite
+*.sqlite-journal
+database/*.sqlite
+database/*.sqlite-journal
+
+# NPM/Yarn
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Composer
+composer.lock
