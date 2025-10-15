@@ -48,10 +48,27 @@ class FetchProgressPlannerData extends Command
 
         // Step 3: Fetch stats for each site
         $this->info('Fetching stats for each site...');
-        $bar = $this->output->createProgressBar(count($sites));
+        $registeredSites = $progressPlannerService->getAllSites();
+        $bar = $this->output->createProgressBar($registeredSites->count());
         $bar->start();
 
-        $results = $siteStatsService->fetchAllSiteStats();
+        $successful = 0;
+        $failed = 0;
+
+        foreach ($registeredSites as $site) {
+            $siteStatsService->fetchSiteStats($site);
+
+            // Refresh to get updated stats
+            $site->load('siteStat');
+
+            if ($site->siteStat && $site->siteStat->api_available) {
+                $successful++;
+            } else {
+                $failed++;
+            }
+
+            $bar->advance();
+        }
 
         $bar->finish();
         $this->newLine(2);
@@ -61,9 +78,9 @@ class FetchProgressPlannerData extends Command
         $this->table(
             ['Metric', 'Count'],
             [
-                ['Total Sites', $results['total']],
-                ['Successful', $results['successful']],
-                ['Failed', $results['failed']],
+                ['Total Sites', $registeredSites->count()],
+                ['Successful', $successful],
+                ['Failed', $failed],
             ]
         );
 
