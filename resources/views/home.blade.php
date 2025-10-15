@@ -8,21 +8,21 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <!-- Total Registered Sites -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-1">
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Total Registered Sites
+                                    Total Registered
                                 </p>
-                                <p class="mt-2 text-4xl font-bold text-gray-900 dark:text-gray-100">
+                                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
                                     {{ number_format($totalSites) }}
                                 </p>
                             </div>
                             <div class="flex-shrink-0">
-                                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                 </svg>
                             </div>
@@ -36,18 +36,66 @@
                         <div class="flex items-center">
                             <div class="flex-1">
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                    Total Active Sites
+                                    Total Active
                                 </p>
-                                <p class="mt-2 text-4xl font-bold text-gray-900 dark:text-gray-100">
+                                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
                                     {{ number_format($activeSites) }}
                                 </p>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     {{ $totalSites > 0 ? round(($activeSites / $totalSites) * 100, 1) : 0 }}% of total
                                 </p>
                             </div>
                             <div class="flex-shrink-0">
-                                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active with License -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    With License
+                                </p>
+                                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ number_format($activeSitesWithLicense) }}
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $activeSites > 0 ? round(($activeSitesWithLicense / $activeSites) * 100, 1) : 0 }}% of active
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <svg class="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active without License -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                    No License
+                                </p>
+                                <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ number_format($activeSitesNoLicense) }}
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $activeSites > 0 ? round(($activeSitesNoLicense / $activeSites) * 100, 1) : 0 }}% of active
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                             </div>
                         </div>

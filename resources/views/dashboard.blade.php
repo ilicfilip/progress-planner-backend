@@ -39,11 +39,10 @@
                                 <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Site URL</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">License Key</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">License Status</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Plugin Version</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Emailed</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">API Status</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">API Endpoint</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Details</th>
                                     </tr>
                                 </thead>
@@ -55,8 +54,19 @@
                                                     {{ $site->site_url }}
                                                 </a>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-xs">
-                                                {{ $site->license_key ? Str::limit($site->license_key, 20) : 'N/A' }}
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                @if($site->license_key)
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
+                                                        Has License
+                                                    </span>
+                                                    <div class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">
+                                                        {{ Str::limit($site->license_key, 20) }}
+                                                    </div>
+                                                @else
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">
+                                                        No License
+                                                    </span>
+                                                @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 {{ $site->siteStat?->plugin_version ?? 'N/A' }}
@@ -65,26 +75,21 @@
                                                 {{ $site->last_emailed_date?->format('Y-m-d') ?? 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                @if($site->siteStat?->api_available)
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                @if($site->license_key && $site->siteStat?->api_available)
+                                                    @php
+                                                        $apiUrl = rtrim($site->site_url, '/') . '/wp-json/?rest_route=/progress-planner/v1/get-stats/' . $site->license_key;
+                                                    @endphp
+                                                    <a href="{{ $apiUrl }}" target="_blank" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-700">
                                                         Available
+                                                    </a>
+                                                @elseif(!$site->license_key && $site->siteStat?->api_available)
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">
+                                                        No License
                                                     </span>
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
                                                         Failed
                                                     </span>
-                                                @endif
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                @if($site->license_key && $site->siteStat?->api_available)
-                                                    @php
-                                                        $apiUrl = rtrim($site->site_url, '/') . '/wp-json/?rest_route=/progress-planner/v1/get-stats/' . $site->license_key;
-                                                    @endphp
-                                                    <a href="{{ $apiUrl }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                                        Endpoint
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-500 dark:text-gray-400">Failed</span>
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">

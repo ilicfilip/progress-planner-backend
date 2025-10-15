@@ -16,6 +16,19 @@ class HomeController extends Controller
         // Total active sites (API available)
         $activeSites = SiteStat::where('api_available', true)->count();
 
+        // Active sites without license key (detected via fake key test)
+        $activeSitesNoLicense = SiteStat::where('api_available', true)
+            ->whereHas('registeredSite', function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNull('license_key')
+                      ->orWhere('license_key', '');
+                });
+            })
+            ->count();
+
+        // Active sites with license key
+        $activeSitesWithLicense = $activeSites - $activeSitesNoLicense;
+
         // Plugin version distribution (for active sites only)
         $versionStats = SiteStat::where('api_available', true)
             ->whereNotNull('plugin_version')
@@ -67,6 +80,8 @@ class HomeController extends Controller
         return view('home', [
             'totalSites' => $totalSites,
             'activeSites' => $activeSites,
+            'activeSitesWithLicense' => $activeSitesWithLicense,
+            'activeSitesNoLicense' => $activeSitesNoLicense,
             'versionData' => $versionData,
         ]);
     }
