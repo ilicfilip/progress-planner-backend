@@ -1,16 +1,18 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('home');
 })->middleware('auth');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::post('/dashboard/refetch', [DashboardController::class, 'refetch'])->name('dashboard.refetch');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/registered-sites', [DashboardController::class, 'index'])->name('registered-sites');
+    Route::post('/registered-sites/refetch', [DashboardController::class, 'refetch'])->name('registered-sites.refetch');
 });
 
 Route::middleware('auth')->group(function () {

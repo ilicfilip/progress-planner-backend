@@ -42,7 +42,7 @@ class DashboardController extends Controller
             }
 
             return redirect()
-                ->route('dashboard')
+                ->route('registered-sites')
                 ->with('success', sprintf(
                     'Data refresh started! %d sites synced. %d background jobs queued to fetch stats.',
                     count($sites),
@@ -50,7 +50,7 @@ class DashboardController extends Controller
                 ));
         } catch (\Exception $e) {
             return redirect()
-                ->route('dashboard')
+                ->route('registered-sites')
                 ->with('error', 'Failed to refresh data: ' . $e->getMessage());
         }
     }
