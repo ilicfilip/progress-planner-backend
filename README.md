@@ -1,61 +1,299 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Progress Planner Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel-based monitoring dashboard for tracking Progress Planner WordPress plugin installations across multiple sites.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- 🔐 Secure authentication (Laravel Breeze)
+- 📊 Dashboard displaying all registered sites
+- 🔄 Automatic data fetching and caching from Progress Planner API
+- 📈 Plugin version tracking
+- ✅ API availability status monitoring
+- 🌐 Direct links to site endpoints
+- 🎨 Dark mode support
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Composer
+- SQLite (or any Laravel-supported database)
+- Node.js & NPM (for asset compilation)
 
-## Learning Laravel
+## Installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 1. Clone and Install Dependencies
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+# Navigate to project directory
+cd /Users/filip/Valet/planner-backend/htdocs
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Install PHP dependencies
+composer install
 
-## Laravel Sponsors
+# Install NPM dependencies
+npm install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. Environment Configuration
 
-### Premium Partners
+The `.env` file should already be configured with SQLite. Verify these settings:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=/Users/filip/Valet/planner-backend/htdocs/database/database.sqlite
+```
 
-## Contributing
+### 3. Generate Application Key
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+If not already generated:
 
-## Code of Conduct
+```bash
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4. Run Database Migrations
 
-## Security Vulnerabilities
+```bash
+php artisan migrate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 5. Build Frontend Assets
+
+```bash
+npm run build
+```
+
+## Creating a User Account
+
+### Option 1: Using Tinker (Recommended)
+
+```bash
+php artisan tinker
+```
+
+Then run:
+
+```php
+App\Models\User::create([
+    'name' => 'Your Name',
+    'email' => 'your@email.com',
+    'password' => bcrypt('your-secure-password')
+]);
+```
+
+Press `Ctrl+C` to exit Tinker.
+
+### Option 2: Using Registration Page
+
+1. Start your Laravel server
+2. Navigate to `/register`
+3. Fill in the registration form
+
+## Fetching Progress Planner Data
+
+### Initial Data Fetch
+
+Before accessing the dashboard, fetch the data from Progress Planner:
+
+```bash
+php artisan progress-planner:fetch
+```
+
+This command will:
+- Fetch all registered sites from the Progress Planner API
+- Store them in the database
+- Attempt to fetch stats from each site's API endpoint
+- Display a summary of successful and failed requests
+
+### Force Refresh (Clear Cache)
+
+```bash
+php artisan progress-planner:fetch --force
+```
+
+## Running the Application
+
+### Laravel Valet (macOS)
+
+If you're using Laravel Valet:
+
+```bash
+# The site should already be accessible at:
+# http://planner-backend.test
+```
+
+### Built-in PHP Server
+
+```bash
+php artisan serve
+```
+
+Access at: `http://localhost:8000`
+
+### Laravel Sail (Docker)
+
+```bash
+./vendor/bin/sail up
+```
+
+## Accessing the Dashboard
+
+1. Open your browser and navigate to your application URL
+2. Log in with your credentials
+3. You'll be redirected to the dashboard showing all registered sites
+
+### Dashboard Features
+
+- **Site URL**: Clickable link to the actual site
+- **License Key**: Truncated license key for security
+- **Plugin Version**: Current version of Progress Planner plugin
+- **Last Emailed**: Date of last email sent to site owner
+- **API Status**: Green (Available) or Red (Failed)
+- **API Endpoint**: Direct link to the site's stats API (if available)
+- **Refetch Data Button**: Manually refresh all data from the API
+
+## Artisan Commands
+
+### Fetch Progress Planner Data
+
+```bash
+# Normal fetch (uses cached data if available)
+php artisan progress-planner:fetch
+
+# Force refresh (ignores cache)
+php artisan progress-planner:fetch --force
+```
+
+## Project Structure
+
+```
+app/
+├── Console/Commands/
+│   └── FetchProgressPlannerData.php    # Artisan command for data fetching
+├── Http/Controllers/
+│   └── DashboardController.php         # Dashboard and refetch logic
+├── Models/
+│   ├── RegisteredSite.php              # Site model
+│   └── SiteStat.php                    # Stats model
+└── Services/
+    ├── ProgressPlannerService.php      # API fetching and caching
+    └── SiteStatsService.php            # Individual site stats fetching
+
+database/migrations/
+├── *_create_registered_sites_table.php
+└── *_create_site_stats_table.php
+
+resources/views/
+└── dashboard.blade.php                 # Main dashboard view
+```
+
+## Database Schema
+
+### registered_sites
+- `id`: Primary key
+- `site_url`: Unique site URL
+- `license_key`: Plugin license key
+- `last_emailed_at`: YYYYWW format from API
+- `last_emailed_date`: Converted date (Y-m-d)
+- `raw_data`: JSON of complete API response
+- `timestamps`: created_at, updated_at
+
+### site_stats
+- `id`: Primary key
+- `registered_site_id`: Foreign key to registered_sites
+- `api_available`: Boolean indicating if API is accessible
+- `plugin_version`: Detected plugin version
+- `raw_response`: JSON of complete API response
+- `error_message`: Error details if API call failed
+- `last_fetched_at`: Timestamp of last fetch attempt
+- `timestamps`: created_at, updated_at
+
+## API Configuration
+
+The Progress Planner API configuration is located in:
+
+**File**: `app/Services/ProgressPlannerService.php`
+
+```php
+private const API_URL = 'https://progressplanner.com/wp-json/progress-planner-saas/v1/registered-sites';
+private const API_TOKEN = 'ebd6a96d7320c0d1dd5e819098676f08';
+private const CACHE_KEY = 'registered_sites_data';
+private const CACHE_TTL = 3600; // 1 hour
+```
+
+To modify the API endpoint or token, edit these constants.
+
+## Caching
+
+Registered sites data is cached for 1 hour by default to reduce API calls. You can:
+
+- Clear cache: `php artisan cache:clear`
+- Force refresh: Use the "Refetch Data" button or `--force` flag
+
+## Troubleshooting
+
+### Database Issues
+
+```bash
+# Reset database
+php artisan migrate:fresh
+
+# Check database connection
+php artisan tinker
+>>> DB::connection()->getPdo();
+```
+
+### Asset Issues
+
+```bash
+# Rebuild assets
+npm run build
+
+# For development with hot reload
+npm run dev
+```
+
+### Clear All Caches
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+### Check Logs
+
+```bash
+tail -f storage/logs/laravel.log
+```
+
+## Security Notes
+
+- All routes require authentication
+- The root URL redirects to dashboard (requires login)
+- API token is hardcoded in service class (consider moving to .env for production)
+- Database contains sensitive site information (ensure proper server security)
+
+## Development
+
+### Running Tests
+
+```bash
+php artisan test
+```
+
+### Code Style
+
+```bash
+# Laravel Pint (included)
+./vendor/bin/pint
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Private project for Progress Planner monitoring.
+
+## Support
+
+For issues or questions, contact the development team.
