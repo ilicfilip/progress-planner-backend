@@ -34,6 +34,9 @@ class DashboardController extends Controller
             $sites = $this->progressPlannerService->fetchAndCacheRegisteredSites(true);
             $this->progressPlannerService->syncRegisteredSitesToDatabase($sites);
 
+            // Clean up any local/staging sites
+            $cleanedUpCount = $this->progressPlannerService->cleanupLocalSites();
+
             // Dispatch jobs to fetch stats for each site in the background
             $registeredSites = $this->progressPlannerService->getAllSites();
 
@@ -41,13 +44,19 @@ class DashboardController extends Controller
                 FetchSiteStatsJob::dispatch($site);
             }
 
+            $message = sprintf(
+                'Data refresh started! %d sites synced. %d background jobs queued to fetch stats.',
+                count($sites),
+                $registeredSites->count()
+            );
+
+            if ($cleanedUpCount > 0) {
+                $message .= sprintf(' %d local/staging site(s) removed.', $cleanedUpCount);
+            }
+
             return redirect()
                 ->route('registered-sites')
-                ->with('success', sprintf(
-                    'Data refresh started! %d sites synced. %d background jobs queued to fetch stats.',
-                    count($sites),
-                    $registeredSites->count()
-                ));
+                ->with('success', $message);
         } catch (\Exception $e) {
             return redirect()
                 ->route('registered-sites')

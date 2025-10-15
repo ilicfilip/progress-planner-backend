@@ -72,6 +72,27 @@ class ProgressPlannerService
     }
 
     /**
+     * Check if site URL should be excluded (local/staging sites)
+     */
+    private function shouldExcludeSite(string $siteUrl): bool
+    {
+        $excludePatterns = [
+            '.test',
+            '.local',
+            'localhost',
+            'playground.wordpress.net',
+        ];
+
+        foreach ($excludePatterns as $pattern) {
+            if (stripos($siteUrl, $pattern) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Create or update a registered site
      */
     private function createOrUpdateSite(array $siteData): void
@@ -79,6 +100,12 @@ class ProgressPlannerService
         $siteUrl = rtrim($siteData['site_url'] ?? '', '/');
 
         if (empty($siteUrl)) {
+            return;
+        }
+
+        // Skip local/staging sites
+        if ($this->shouldExcludeSite($siteUrl)) {
+            Log::info('Skipping local/staging site: ' . $siteUrl);
             return;
         }
 
@@ -127,6 +154,32 @@ class ProgressPlannerService
             Log::warning('Failed to convert week to date: ' . $weekString);
             return null;
         }
+    }
+
+    /**
+     * Clean up local/staging sites from database
+     */
+    public function cleanupLocalSites(): int
+    {
+        $excludePatterns = [
+            '.test',
+            '.local',
+            'localhost',
+            'playground.wordpress.net',
+        ];
+
+        $deletedCount = 0;
+
+        foreach ($excludePatterns as $pattern) {
+            $deleted = RegisteredSite::where('site_url', 'LIKE', '%' . $pattern . '%')->delete();
+            $deletedCount += $deleted;
+        }
+
+        if ($deletedCount > 0) {
+            Log::info("Cleaned up {$deletedCount} local/staging site(s)");
+        }
+
+        return $deletedCount;
     }
 
     /**
