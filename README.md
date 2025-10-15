@@ -6,10 +6,11 @@ A Laravel-based monitoring dashboard for tracking Progress Planner WordPress plu
 
 - 🔐 Secure authentication (Laravel Breeze)
 - 📊 Dashboard displaying all registered sites
-- 🔄 Automatic data fetching and caching from Progress Planner API
+- 🔄 Background job queue for fetching site stats (prevents timeouts)
 - 📈 Plugin version tracking
 - ✅ API availability status monitoring
 - 🌐 Direct links to site endpoints
+- 📋 Detailed site information modal with raw API data
 - 🎨 Dark mode support
 
 ## Requirements
@@ -41,7 +42,12 @@ The `.env` file should already be configured with SQLite. Verify these settings:
 ```env
 DB_CONNECTION=sqlite
 DB_DATABASE=/Users/filip/Valet/planner-backend/htdocs/database/database.sqlite
+
+# Queue configuration (already set)
+QUEUE_CONNECTION=database
 ```
+
+The queue is configured to use the database driver, which stores jobs in the `jobs` table.
 
 ### 3. Generate Application Key
 
@@ -136,6 +142,74 @@ Access at: `http://localhost:8000`
 ./vendor/bin/sail up
 ```
 
+## Running the Queue Worker
+
+**IMPORTANT**: The queue worker must be running for the "Refetch Data" button to work properly. The application uses background jobs to fetch stats from hundreds of sites, preventing HTTP timeouts.
+
+### For Development
+
+Open a **separate terminal** and run:
+
+```bash
+php artisan queue:work
+```
+
+This will process background jobs as they are dispatched. Keep this terminal open while using the application.
+
+### For Production (using Supervisor)
+
+Install Supervisor (if not already installed):
+
+```bash
+# macOS
+brew install supervisor
+
+# Ubuntu/Debian
+sudo apt-get install supervisor
+```
+
+Create a Supervisor configuration file at `/etc/supervisor/conf.d/progress-planner-worker.conf`:
+
+```ini
+[program:progress-planner-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /path/to/your/project/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=your-user
+numprocs=4
+redirect_stderr=true
+stdout_logfile=/path/to/your/project/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+Then start the workers:
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start progress-planner-worker:*
+```
+
+### Monitoring Queue Jobs
+
+Check pending jobs:
+```bash
+php artisan queue:monitor
+```
+
+View failed jobs:
+```bash
+php artisan queue:failed
+```
+
+Retry failed jobs:
+```bash
+php artisan queue:retry all
+```
+
 ## Accessing the Dashboard
 
 1. Open your browser and navigate to your application URL
@@ -150,7 +224,18 @@ Access at: `http://localhost:8000`
 - **Last Emailed**: Date of last email sent to site owner
 - **API Status**: Green (Available) or Red (Failed)
 - **API Endpoint**: Direct link to the site's stats API (if available)
-- **Refetch Data Button**: Manually refresh all data from the API
+- **View Details**: Opens a modal with complete site information and raw API responses
+- **Refetch Data Button**: Queues background jobs to refresh all data from the API
+
+### How Refetch Works
+
+When you click "Refetch Data":
+1. The registered sites list is fetched from Progress Planner API (fast, ~2 seconds)
+2. Sites are synced to the database
+3. Background jobs are dispatched for each site to fetch individual stats
+4. The page returns immediately with a success message
+5. Jobs process in the background (requires queue worker to be running)
+6. Refresh the page to see updated stats as jobs complete
 
 ## Artisan Commands
 
@@ -172,6 +257,8 @@ app/
 │   └── FetchProgressPlannerData.php    # Artisan command for data fetching
 ├── Http/Controllers/
 │   └── DashboardController.php         # Dashboard and refetch logic
+├── Jobs/
+│   └── FetchSiteStatsJob.php           # Background job for fetching site stats
 ├── Models/
 │   ├── RegisteredSite.php              # Site model
 │   └── SiteStat.php                    # Stats model
@@ -181,10 +268,11 @@ app/
 
 database/migrations/
 ├── *_create_registered_sites_table.php
-└── *_create_site_stats_table.php
+├── *_create_site_stats_table.php
+└── *_create_jobs_table.php             # Queue jobs table
 
 resources/views/
-└── dashboard.blade.php                 # Main dashboard view
+└── dashboard.blade.php                 # Main dashboard view with modal
 ```
 
 ## Database Schema
@@ -267,6 +355,33 @@ php artisan view:clear
 ```bash
 tail -f storage/logs/laravel.log
 ```
+
+### Queue Worker Issues
+
+If the refetch button doesn't update data:
+
+```bash
+# Check if queue worker is running
+ps aux | grep "queue:work"
+
+# Check pending jobs
+php artisan queue:monitor
+
+# Check failed jobs
+php artisan queue:failed
+
+# Restart queue worker
+# Stop with Ctrl+C and restart
+php artisan queue:work
+
+# Clear and restart queue
+php artisan queue:restart
+```
+
+If jobs are failing:
+- Check `storage/logs/laravel.log` for errors
+- Verify the site's API is accessible
+- Check timeout settings in `app/Services/SiteStatsService.php`
 
 ## Security Notes
 

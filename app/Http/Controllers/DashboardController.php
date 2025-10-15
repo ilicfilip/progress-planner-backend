@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\FetchSiteStatsJob;
 use App\Services\ProgressPlannerService;
-use App\Services\SiteStatsService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        private ProgressPlannerService $progressPlannerService,
-        private SiteStatsService $siteStatsService
+        private ProgressPlannerService $progressPlannerService
     ) {}
 
     /**
@@ -32,20 +30,23 @@ class DashboardController extends Controller
     public function refetch(Request $request)
     {
         try {
-            // Fetch and sync registered sites
+            // Fetch and sync registered sites (this is fast)
             $sites = $this->progressPlannerService->fetchAndCacheRegisteredSites(true);
             $this->progressPlannerService->syncRegisteredSitesToDatabase($sites);
 
-            // Fetch stats for all sites
-            $results = $this->siteStatsService->fetchAllSiteStats();
+            // Dispatch jobs to fetch stats for each site in the background
+            $registeredSites = $this->progressPlannerService->getAllSites();
+
+            foreach ($registeredSites as $site) {
+                FetchSiteStatsJob::dispatch($site);
+            }
 
             return redirect()
                 ->route('dashboard')
                 ->with('success', sprintf(
-                    'Data refreshed successfully! Total: %d, Successful: %d, Failed: %d',
-                    $results['total'],
-                    $results['successful'],
-                    $results['failed']
+                    'Data refresh started! %d sites synced. %d background jobs queued to fetch stats.',
+                    count($sites),
+                    $registeredSites->count()
                 ));
         } catch (\Exception $e) {
             return redirect()
