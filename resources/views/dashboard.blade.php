@@ -56,11 +56,8 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 @if($site->license_key)
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
-                                                        Has License
-                                                    </span>
-                                                    <div class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">
-                                                        {{ Str::limit($site->license_key, 20) }}
+                                                    <div class="font-mono text-xs text-gray-900 dark:text-gray-100">
+                                                        {{ $site->license_key }}
                                                     </div>
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">
@@ -84,7 +81,7 @@
                                                     </a>
                                                 @elseif(!$site->license_key && $site->siteStat?->api_available)
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">
-                                                        No License
+                                                        N/A
                                                     </span>
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
