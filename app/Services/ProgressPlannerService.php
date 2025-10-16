@@ -81,6 +81,7 @@ class ProgressPlannerService
             '.local',
             'localhost',
             'playground.wordpress.net',
+            'playground.progressplanner.com',
         ];
 
         foreach ($excludePatterns as $pattern) {
@@ -166,6 +167,7 @@ class ProgressPlannerService
             '.local',
             'localhost',
             'playground.wordpress.net',
+            'playground.progressplanner.com',
         ];
 
         $deletedCount = 0;
