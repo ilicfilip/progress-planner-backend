@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'cloudflare' => [
+        'worker_url' => env('CLOUDFLARE_WORKER_URL'),
+    ],
+
 ];

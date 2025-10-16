@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RegisteredSite extends Model
@@ -23,5 +24,15 @@ class RegisteredSite extends Model
     public function siteStat(): HasOne
     {
         return $this->hasOne(SiteStat::class);
+    }
+
+    public function siteSnapshots(): HasMany
+    {
+        return $this->hasMany(SiteSnapshot::class);
+    }
+
+    public function latestSnapshot(): HasOne
+    {
+        return $this->hasOne(SiteSnapshot::class)->latestOfMany();
     }
 }

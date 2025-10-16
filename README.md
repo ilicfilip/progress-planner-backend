@@ -12,6 +12,7 @@ A Laravel-based monitoring dashboard for tracking Progress Planner WordPress plu
 - 🌐 Direct links to site endpoints
 - 📋 Detailed site information modal with raw API data
 - 🎨 Dark mode support
+- 📸 HTML snapshot fetching via Cloudflare Workers (prevents IP tracking & timeouts)
 
 ## Requirements
 
@@ -45,6 +46,9 @@ DB_DATABASE=/Users/filip/Valet/planner-backend/htdocs/database/database.sqlite
 
 # Queue configuration (already set)
 QUEUE_CONNECTION=database
+
+# Cloudflare Worker URL for HTML fetching
+CLOUDFLARE_WORKER_URL=https://your-worker.workers.dev
 ```
 
 The queue is configured to use the database driver, which stores jobs in the `jobs` table.
@@ -249,26 +253,54 @@ php artisan progress-planner:fetch
 php artisan progress-planner:fetch --force
 ```
 
+### Fetch Site HTML via Cloudflare Worker
+
+Fetch and store homepage HTML snapshots for all registered sites using Cloudflare Workers. This prevents timeout issues and keeps your server IP private.
+
+```bash
+# Fetch HTML for all sites (only those not fetched in last hour)
+php artisan sites:fetch-html
+
+# Force fetch all sites regardless of last fetch time
+php artisan sites:fetch-html --force
+
+# Fetch specific domain(s)
+php artisan sites:fetch-html --domains=example.com
+php artisan sites:fetch-html --domains=example.com --domains=another.com
+```
+
+**How it works:**
+1. Command sends domain list to Cloudflare Worker
+2. Worker fetches HTML from each site (distributed, anonymous)
+3. After 60 seconds, Laravel retrieves and stores the HTML snapshots
+4. Background jobs handle the entire process (requires queue worker running)
+
 ## Project Structure
 
 ```
 app/
 ├── Console/Commands/
-│   └── FetchProgressPlannerData.php    # Artisan command for data fetching
+│   ├── FetchProgressPlannerData.php    # Artisan command for data fetching
+│   └── FetchSiteHtmlCommand.php        # Artisan command for HTML fetching
 ├── Http/Controllers/
 │   └── DashboardController.php         # Dashboard and refetch logic
 ├── Jobs/
-│   └── FetchSiteStatsJob.php           # Background job for fetching site stats
+│   ├── FetchSiteStatsJob.php           # Background job for fetching site stats
+│   ├── QueueSiteHtmlFetchJob.php       # Job to queue domains with CF Worker
+│   └── FetchSiteHtmlJob.php            # Job to retrieve HTML from CF Worker
 ├── Models/
 │   ├── RegisteredSite.php              # Site model
-│   └── SiteStat.php                    # Stats model
+│   ├── SiteStat.php                    # Stats model
+│   └── SiteSnapshot.php                # HTML snapshot model
 └── Services/
     ├── ProgressPlannerService.php      # API fetching and caching
-    └── SiteStatsService.php            # Individual site stats fetching
+    ├── SiteStatsService.php            # Individual site stats fetching
+    └── CloudflareWorkerService.php     # Cloudflare Worker communication
 
 database/migrations/
 ├── *_create_registered_sites_table.php
 ├── *_create_site_stats_table.php
+├── *_create_site_snapshots_table.php   # HTML snapshots table
 └── *_create_jobs_table.php             # Queue jobs table
 
 resources/views/
@@ -296,7 +328,16 @@ resources/views/
 - `last_fetched_at`: Timestamp of last fetch attempt
 - `timestamps`: created_at, updated_at
 
+### site_snapshots
+- `id`: Primary key
+- `registered_site_id`: Foreign key to registered_sites
+- `domain`: Site domain name (indexed)
+- `html_content`: Full HTML content of homepage
+- `timestamps`: created_at, updated_at (updated_at tracks last fetch)
+
 ## API Configuration
+
+### Progress Planner API
 
 The Progress Planner API configuration is located in:
 
@@ -310,6 +351,29 @@ private const CACHE_TTL = 3600; // 1 hour
 ```
 
 To modify the API endpoint or token, edit these constants.
+
+### Cloudflare Worker Configuration
+
+The Cloudflare Worker service configuration is located in:
+
+**File**: `app/Services/CloudflareWorkerService.php`
+
+```php
+private const CACHE_PREFIX_IN_PROGRESS = 'html_fetch_in_progress';
+private const CACHE_PREFIX_PENDING = 'html_fetch_pending';
+private const CACHE_TTL = 3600; // 1 hour
+private const FETCH_DELAY = 60; // Wait 60 seconds before fetching results
+private const REQUEST_TIMEOUT = 45; // seconds
+```
+
+The Worker URL is configured in `.env`:
+```env
+CLOUDFLARE_WORKER_URL=https://your-worker.workers.dev
+```
+
+**Worker Endpoints:**
+- `POST /fetch-domains` - Queue domains for HTML fetching
+- `GET /get-results?domain=example.com` - Retrieve HTML for a domain
 
 ## Caching
 
