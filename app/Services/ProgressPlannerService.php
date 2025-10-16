@@ -187,6 +187,6 @@ class ProgressPlannerService
      */
     public function getAllSites()
     {
-        return RegisteredSite::with('siteStat')->get();
+        return RegisteredSite::with('siteStat', 'latestSnapshot')->get();
     }
 }

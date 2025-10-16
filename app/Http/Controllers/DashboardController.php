@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\FetchSiteStatsJob;
+use App\Models\RegisteredSite;
 use App\Services\ProgressPlannerService;
 use Illuminate\Http\Request;
 
@@ -62,5 +63,22 @@ class DashboardController extends Controller
                 ->route('registered-sites')
                 ->with('error', 'Failed to refresh data: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Preview HTML snapshot for a site
+     */
+    public function previewHtml(RegisteredSite $site)
+    {
+        $snapshot = $site->latestSnapshot;
+
+        if (!$snapshot || !$snapshot->html_content) {
+            abort(404, 'No HTML snapshot found for this site');
+        }
+
+        // Return the raw HTML content
+        return response($snapshot->html_content)
+            ->header('Content-Type', 'text/html')
+            ->header('X-Frame-Options', 'SAMEORIGIN');
     }
 }

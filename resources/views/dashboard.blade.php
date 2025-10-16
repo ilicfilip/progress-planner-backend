@@ -43,6 +43,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Plugin Version</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Emailed</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">API Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">HTML Snapshot</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Details</th>
                                     </tr>
                                 </thead>
@@ -86,6 +87,20 @@
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
                                                         Failed
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                @if($site->latestSnapshot)
+                                                    <a href="{{ route('registered-sites.preview-html', $site) }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 underline">
+                                                        Preview
+                                                    </a>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        {{ $site->latestSnapshot->updated_at->diffForHumans() }}
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-400 dark:text-gray-500 text-xs">
+                                                        Not fetched
                                                     </span>
                                                 @endif
                                             </td>

@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/registered-sites', [DashboardController::class, 'index'])->name('registered-sites');
     Route::post('/registered-sites/refetch', [DashboardController::class, 'refetch'])->name('registered-sites.refetch');
+    Route::get('/registered-sites/{site}/preview-html', [DashboardController::class, 'previewHtml'])->name('registered-sites.preview-html');
 });
 
 Route::middleware('auth')->group(function () {

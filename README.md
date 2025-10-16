@@ -228,6 +228,10 @@ php artisan queue:retry all
 - **Last Emailed**: Date of last email sent to site owner
 - **API Status**: Green (Available) or Red (Failed)
 - **API Endpoint**: Direct link to the site's stats API (if available)
+- **HTML Snapshot**: Preview fetched homepage HTML (opens in new tab)
+  - Shows "Preview" link if snapshot exists
+  - Displays when the snapshot was last fetched
+  - Shows "Not fetched" if no snapshot is available
 - **View Details**: Opens a modal with complete site information and raw API responses
 - **Refetch Data Button**: Queues background jobs to refresh all data from the API
 
@@ -274,6 +278,22 @@ php artisan sites:fetch-html --domains=example.com --domains=another.com
 2. Worker fetches HTML from each site (distributed, anonymous)
 3. After 60 seconds, Laravel retrieves and stores the HTML snapshots
 4. Background jobs handle the entire process (requires queue worker running)
+
+### Preview Fetched HTML
+
+Once HTML snapshots have been fetched, you can preview them directly from the dashboard:
+
+1. Navigate to the "Registered Sites" dashboard
+2. Find the site you want to preview in the table
+3. In the "HTML Snapshot" column:
+   - If a snapshot exists, you'll see a "Preview" link
+   - Click the link to open the HTML in a new tab
+   - The timestamp below shows when it was last fetched
+4. The preview displays the actual HTML content as it was fetched by the Cloudflare Worker
+
+**Route**: The preview is available at `/registered-sites/{site}/preview-html`
+
+**Note**: The HTML is served with `X-Frame-Options: SAMEORIGIN` header for security.
 
 ## Project Structure
 
