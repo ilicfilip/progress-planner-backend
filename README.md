@@ -261,8 +261,10 @@ php artisan progress-planner:fetch --force
 
 Fetch and store homepage HTML snapshots for all registered sites using Cloudflare Workers. This prevents timeout issues and keeps your server IP private.
 
+**Important**: Only fetches HTML from sites where the Progress Planner plugin is confirmed active (api_available = true).
+
 ```bash
-# Fetch HTML for all sites (only those not fetched in last hour)
+# Fetch HTML for all sites with active plugin (only those not fetched in last hour)
 php artisan sites:fetch-html
 
 # Force fetch all sites regardless of last fetch time
@@ -271,13 +273,24 @@ php artisan sites:fetch-html --force
 # Fetch specific domain(s)
 php artisan sites:fetch-html --domains=example.com
 php artisan sites:fetch-html --domains=example.com --domains=another.com
+
+# Check fetch status and progress
+php artisan sites:html-status
+
+# Clear stale cache and start fresh
+php artisan sites:html-status --clear
 ```
 
 **How it works:**
-1. Command sends domain list to Cloudflare Worker
+1. Command sends domain list to Cloudflare Worker (only sites with active plugin)
 2. Worker fetches HTML from each site (distributed, anonymous)
 3. After 60 seconds, Laravel retrieves and stores the HTML snapshots
 4. Background jobs handle the entire process (requires queue worker running)
+
+**Troubleshooting:**
+- If you see "Domains are ready but no jobs queued", run `php artisan queue:work`
+- If fetch seems stuck, check status with `php artisan sites:html-status`
+- To reset everything: `php artisan sites:html-status --clear` then `php artisan sites:fetch-html --force`
 
 ### Preview Fetched HTML
 
@@ -301,7 +314,8 @@ Once HTML snapshots have been fetched, you can preview them directly from the da
 app/
 ├── Console/Commands/
 │   ├── FetchProgressPlannerData.php    # Artisan command for data fetching
-│   └── FetchSiteHtmlCommand.php        # Artisan command for HTML fetching
+│   ├── FetchSiteHtmlCommand.php        # Artisan command for HTML fetching
+│   └── CheckHtmlFetchStatus.php        # Artisan command for checking HTML fetch status
 ├── Http/Controllers/
 │   └── DashboardController.php         # Dashboard and refetch logic
 ├── Jobs/

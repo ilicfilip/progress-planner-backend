@@ -238,11 +238,16 @@ class CloudflareWorkerService
     }
 
     /**
-     * Get all domains from registered sites
+     * Get all domains from registered sites where plugin is active
      */
     public function getAllDomains(): array
     {
-        return RegisteredSite::all()
+        return RegisteredSite::with('siteStat')
+            ->get()
+            ->filter(function ($site) {
+                // Only include sites where plugin is confirmed active
+                return $site->siteStat && $site->siteStat->api_available === true;
+            })
             ->map(function ($site) {
                 return parse_url($site->site_url, PHP_URL_HOST);
             })
