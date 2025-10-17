@@ -41,32 +41,69 @@ class CloudflareWorkerService
             return false;
         }
 
+        // Cloudflare Workers have a limit of 50 subrequests per request
+        // Batch domains into groups of 40 to stay safe
+        $batches = array_chunk($domainsToFetch, 40);
+        $totalBatches = count($batches);
+
+        Log::info('Batching domains for Cloudflare Worker', [
+            'total_domains' => count($domainsToFetch),
+            'batch_count' => $totalBatches,
+            'batch_size' => 40,
+        ]);
+
         try {
-            // Send domains to Cloudflare Worker
-            $response = Http::timeout(self::REQUEST_TIMEOUT)
-                ->post($this->workerUrl . '/fetch-domains', [
-                    'domains' => $domainsToFetch,
+            $allSuccessful = true;
+
+            foreach ($batches as $batchIndex => $batch) {
+                Log::info('Sending batch to Cloudflare Worker', [
+                    'batch' => $batchIndex + 1,
+                    'of' => $totalBatches,
+                    'domains_in_batch' => count($batch),
                 ]);
 
-            if (!$response->successful()) {
-                Log::error('Failed to queue domains with CF Worker', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                // Send batch to Cloudflare Worker
+                $response = Http::timeout(self::REQUEST_TIMEOUT)
+                    ->post($this->workerUrl . '/fetch-domains', [
+                        'domains' => $batch,
+                    ]);
+
+                if (!$response->successful()) {
+                    Log::error('Failed to queue batch with CF Worker', [
+                        'batch' => $batchIndex + 1,
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                    $allSuccessful = false;
+                    continue;
+                }
+
+                $responseData = $response->json();
+                Log::info('CF Worker batch response', [
+                    'batch' => $batchIndex + 1,
+                    'response' => $responseData,
+                ]);
+
+                // Mark domains in this batch as in progress
+                $this->addInProgressDomains($batch);
+
+                // Add to pending fetch queue with timestamp
+                $this->addPendingDomains($batch);
+            }
+
+            if ($allSuccessful) {
+                Log::info('Successfully queued all domains for HTML fetch', [
+                    'total_domains' => count($domainsToFetch),
+                    'batches' => $totalBatches,
+                ]);
+                return true;
+            } else {
+                Log::warning('Some batches failed to queue', [
+                    'total_domains' => count($domainsToFetch),
+                    'batches' => $totalBatches,
                 ]);
                 return false;
             }
-
-            // Mark domains as in progress
-            $this->addInProgressDomains($domainsToFetch);
-
-            // Add to pending fetch queue with timestamp
-            $this->addPendingDomains($domainsToFetch);
-
-            Log::info('Successfully queued domains for HTML fetch', [
-                'count' => count($domainsToFetch),
-            ]);
-
-            return true;
         } catch (\Exception $e) {
             Log::error('Exception queuing domains: ' . $e->getMessage());
             return false;
@@ -102,7 +139,41 @@ class CloudflareWorkerService
                 $data = $response->json();
 
                 if (isset($data[$domain])) {
-                    $this->storeSnapshot($domain, $data[$domain]);
+                    $domainData = $data[$domain];
+
+                    // Handle new JSON format
+                    if (is_array($domainData)) {
+                        if (isset($domainData['error']) && $domainData['error'] === true) {
+                            Log::error('Domain fetch returned error', [
+                                'domain' => $domain,
+                                'error' => $domainData['message'] ?? 'Unknown error',
+                                'details' => $domainData,
+                            ]);
+                            $results['failed'][] = $domain;
+
+                            // Remove from pending and in-progress even on error
+                            $this->removePendingDomain($domain);
+                            $this->removeInProgressDomain($domain);
+                            continue;
+                        }
+
+                        // Extract HTML from new format
+                        $htmlContent = $domainData['html'] ?? null;
+
+                        if (!$htmlContent) {
+                            Log::warning('No HTML content in response', [
+                                'domain' => $domain,
+                                'data' => $domainData,
+                            ]);
+                            $results['failed'][] = $domain;
+                            continue;
+                        }
+                    } else {
+                        // Old format - plain HTML string
+                        $htmlContent = $domainData;
+                    }
+
+                    $this->storeSnapshot($domain, $htmlContent);
                     $results['successful'][] = $domain;
 
                     // Remove from pending and in-progress
